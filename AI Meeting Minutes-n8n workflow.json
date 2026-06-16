@@ -1,0 +1,243 @@
+{
+  "name": "My workflow 2",
+  "nodes": [
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFolder",
+        "folderToWatch": {
+          "__rl": true,
+          "value": "1RAu2m68Zv79OVn-5L4Nw7Fr29KrhVtIn",
+          "mode": "list",
+          "cachedResultName": "Meeting-Audio",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1RAu2m68Zv79OVn-5L4Nw7Fr29KrhVtIn"
+        },
+        "event": "fileCreated",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "04d59cab-1281-448a-b7fc-6193dd53cee6",
+      "name": "Google Drive Trigger",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "a3sgaai2nFMDy5YS",
+          "name": "Google Drive OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        208,
+        0
+      ],
+      "id": "e37b552e-ea4c-4552-b7c7-7f90a1570ab6",
+      "name": "Download file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "a3sgaai2nFMDy5YS",
+          "name": "Google Drive OAuth2 API"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "audio",
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "inputType": "binary",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        416,
+        0
+      ],
+      "id": "7e361f1b-74c0-4d33-923f-cbebc039510b",
+      "name": "Transcribe a recording1",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "VEihQ0LoFwcOLf9n",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "models/gemini-3-flash-preview"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=You are an AI meeting assistant.\n\nCreate professional meeting minutes from this transcript.\n\nInclude:\n1. Summary\n2. Key Discussion Points\n3. Decisions Made\n4. Action Items\n5. Important Notes\n\nTranscript:\n{{ $json.content.parts[0].text }}\n"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        624,
+        0
+      ],
+      "id": "8924cb3f-5d96-451a-a71a-476e8b932ac3",
+      "name": "Message a model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "VEihQ0LoFwcOLf9n",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "toText",
+        "sourceProperty": "content.parts[0].text",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.1,
+      "position": [
+        976,
+        0
+      ],
+      "id": "170aef5a-5dec-4f55-99c1-1fdef163064c",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "name": "TeamMeeting",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1N7xpR9nzrAZG4a_hQlb-tG1dCAhhHcT2",
+          "mode": "list",
+          "cachedResultName": "Meeting-Reports",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1N7xpR9nzrAZG4a_hQlb-tG1dCAhhHcT2"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        1184,
+        0
+      ],
+      "id": "3e0c4edd-96a5-4606-8b52-d0679eb37069",
+      "name": "Upload file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "a3sgaai2nFMDy5YS",
+          "name": "Google Drive OAuth2 API"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Google Drive Trigger": {
+      "main": [
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file": {
+      "main": [
+        [
+          {
+            "node": "Transcribe a recording1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transcribe a recording1": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Upload file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "1015d4c2-b72d-46fa-bbdd-c56efc8f0e99",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "4143ddc09116c6b9ecfbe283c276442e8f876dcf20c04db39e01d97dc970a76f"
+  },
+  "nodeGroups": [],
+  "id": "Irczg19aFg06jR2X",
+  "tags": []
+}
